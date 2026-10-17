@@ -507,10 +507,20 @@ if dataset_mode == "BankSim":
             bank_results = bank_df.iloc[order if step_col else np.arange(len(bank_df))].copy() if step_col else bank_df.copy()
             bank_results["fraud_probability"] = all_prob
             bank_results["risk_label"] = np.where(all_pred == 1, "Flagged for review", "Lower model score")
+            flagged_bank_mask = bank_results["risk_label"].eq("Flagged for review")
+            st.metric("Transactions flagged for review", f"{int(flagged_bank_mask.sum()):,}")
             st.markdown("**BankSim transaction results**")
-            st.dataframe(bank_results.head(1000), use_container_width=True, hide_index=True)
-            st.download_button("Download BankSim scored results", data=bank_results.to_csv(index=False).encode("utf-8-sig"), file_name="banksim_fraud_results.csv", mime="text/csv", use_container_width=True)
-            st.info("The displayed scored results include predictions on rows used to fit the model, so use the holdout metrics above for performance reporting. This baseline is for education/research, not live banking decisions.")
+            bank_filter = st.radio(
+                "Show BankSim transactions",
+                ["Flagged for review", "All transactions"],
+                horizontal=True,
+                key="banksim_results_filter",
+            )
+            bank_display = bank_results.loc[flagged_bank_mask].copy() if bank_filter == "Flagged for review" else bank_results.copy()
+            st.caption(f"Showing {len(bank_display):,} of {len(bank_results):,} transactions. The table is filtered by the model's current threshold.")
+            st.dataframe(bank_display.head(5000), use_container_width=True, hide_index=True, height=440)
+            st.download_button("Download BankSim scored results (all rows)", data=bank_results.to_csv(index=False).encode("utf-8-sig"), file_name="banksim_fraud_results.csv", mime="text/csv", use_container_width=True)
+            st.info("These are model predictions, not confirmed fraud. The scored output includes rows used to fit the baseline; use the holdout metrics above for performance reporting. This baseline is for education/research, not live banking decisions.")
         except Exception as exc:
             st.error(f"Could not process BankSim CSV: {exc}")
     st.stop()
@@ -786,6 +796,7 @@ if results is not None:
     filter_choice = st.radio(
         "Show transactions",
         ["All transactions", "Flagged for review", "Scored only", "Insufficient history"],
+        index=1,
         horizontal=True,
         label_visibility="collapsed",
     )
