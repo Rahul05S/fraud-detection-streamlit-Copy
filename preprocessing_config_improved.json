@@ -1,0 +1,19 @@
+{
+  "feature_columns": [
+    "step",
+    "amount",
+    "type_CASH_IN",
+    "type_CASH_OUT",
+    "type_DEBIT",
+    "type_PAYMENT",
+    "type_TRANSFER"
+  ],
+  "sequence_length": 10,
+  "amount_transform": "log1p",
+  "scaler_file": "scaler_improved.joblib",
+  "model_file": "liquid_fraud_improved_experiment.pt",
+  "threshold": 0.945212185382843,
+  "threshold_selected_on": "validation",
+  "dataset": "PaySim synthetic mobile-money transactions",
+  "training_windows": 1000000
+}
